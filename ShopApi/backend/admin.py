@@ -1,5 +1,6 @@
 from django.contrib import admin
-from backend.models import User, Contact
+from backend.models import User, Shop, Category, Product, ProductInfo, Parameter, ProductParameter, Order, OrderItem, \
+    Contact
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -17,6 +18,46 @@ class CustomUserAdmin(UserAdmin):
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     list_display = ('email', 'first_name', 'last_name', 'is_staff')
+
+
+@admin.register(Shop)
+class ShopAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ProductInfo)
+class ProductInfoAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Parameter)
+class ParameterAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ProductParameter)
+class ProductParameterAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Contact)
