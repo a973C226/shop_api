@@ -27,8 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
                   'position',
                   'contacts',
                   'type',
-                  'is_staff',
-                  'is_superuser')
+                  'is_staff'
+                  )
         read_only_fields = ('id',)
 
 
@@ -42,7 +42,14 @@ class CategorySerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ('id', 'name', 'state',)
+        fields = ('id', 'name', 'state')
+        read_only_fields = ('id',)
+
+
+class ShopDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shop
+        fields = ('id', 'name', 'state', 'user', 'url', 'filename')
         read_only_fields = ('id',)
 
 

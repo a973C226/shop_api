@@ -3,17 +3,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from backend.serializers import UserSerializer, ContactSerializer
-from backend.models import Contact
+from backend.serializers import UserSerializer, ContactSerializer, CategorySerializer, ShopSerializer, ShopDetailsSerializer
+from backend.models import Contact, Category, Shop
 
 class RegisterAccount(APIView):
 
     def post(self, request, *args, **kwargs):
 
-        if {'first_name', 'last_name', 'email', 'password', 'company', 'position'}.issubset(request.data):
+        if {'first_name', 'last_name', 'email', 'password', 'password_confirm', 'company', 'position'}.issubset(request.data):
             errors = {}
 
             try:
@@ -28,14 +29,20 @@ class RegisterAccount(APIView):
                 request.data.update({})
                 user_serializer = UserSerializer(data=request.data)
                 if user_serializer.is_valid():
+                    if request.data['password'] != request.data['password_confirm']:
+                        return JsonResponse({'Status': False, 'Errors': 'The password and password confirmation must match.'})
                     user = user_serializer.save()
                     user.set_password(request.data['password'])
+                    if user.type == 'shop':
+                        user.is_staff = True
                     user.save()
                     return JsonResponse({'Status': True})
                 else:
                     return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
 
-        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+        return JsonResponse({'Status': False,
+                             'Errors': 'Не указаны все необходимые аргументы '
+                                       '(first_name, last_name, email, password, password_confirm, company, position)'})
 
 
 class LoginAccount(APIView):
@@ -53,7 +60,7 @@ class LoginAccount(APIView):
 
             return JsonResponse({'Status': False, 'Errors': 'Не удалось авторизовать'})
 
-        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы (email, password)'})
 
 
 class ContactView(APIView):
@@ -81,7 +88,7 @@ class ContactView(APIView):
             else:
                 JsonResponse({'Status': False, 'Errors': serializer.errors})
 
-        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы (city, street, phone)'})
 
     def delete(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -118,7 +125,7 @@ class ContactView(APIView):
                     else:
                         JsonResponse({'Status': False, 'Errors': serializer.errors})
 
-        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы (id)'})
 
 
 class AccountDetails(APIView):
@@ -154,3 +161,125 @@ class AccountDetails(APIView):
             return JsonResponse({'Status': True})
         else:
             return JsonResponse({'Status': False, 'Errors': user_serializer.errors})
+
+
+class CategoryView(ListAPIView):
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class ShopView(ListAPIView):
+
+    queryset = Shop.objects.filter(state=True)
+    serializer_class = ShopSerializer
+
+
+class ShopAddView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+        print(request.data)
+        if {'name', 'state'}.issubset(request.data):
+            request.data._mutable = True
+            request.data.update({'user': request.user.id})
+            print(request.data)
+            serializer = ShopDetailsSerializer(data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse({'Status': True})
+            else:
+                return JsonResponse({'Status': False, 'Errors': serializer.errors})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы (name, state)'})
+
+
+class ShopDetailsView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        try:
+            shop = request.user.shop
+            serializer = ShopDetailsSerializer(shop)
+            return Response(serializer.data)
+        except Exception as ex:
+            return JsonResponse({'Status': False, 'Errors': ex.__str__()}, status=403)
+
+    def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        deleted_count = Shop.objects.filter(user_id=request.user.id).delete()[0]
+        return JsonResponse({'Status': True, 'Удалено объектов': deleted_count})
+
+
+    def put(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        shop = Shop.objects.filter(user_id=request.user.id).first()
+        if shop:
+            serializer = ShopDetailsSerializer(shop, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse({'Status': True})
+            else:
+                return JsonResponse({'Status': False, 'Errors': serializer.errors})
+        else:
+            return JsonResponse({'Status': False, 'Errors': 'There are no registered shops'})
+
+
+class PartnerState(APIView):
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        try:
+            shop = request.user.shop
+            serializer = ShopSerializer(shop)
+            return Response(serializer.data)
+        except Exception as ex:
+            return JsonResponse({'Status': False, 'Errors': ex.__str__()}, status=403)
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        state = request.data.get('state')
+        if state:
+            try:
+                if state.lower() == 'true':
+                    state = True
+                else:
+                    state = False
+                shop = Shop.objects.filter(user_id=request.user.id)
+                if shop:
+                    shop.update(state=state)
+                else:
+                    return JsonResponse({'Status': False, 'Errors': 'There are no registered shops'})
+                return JsonResponse({'Status': True})
+            except ValueError as error:
+                return JsonResponse({'Status': False, 'Errors': str(error)})
+
+        return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
+
+
+
+
