@@ -470,5 +470,18 @@ class BasketView(APIView):
 
 
 class PartnerOrders(APIView):
-    pass
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': False, 'Error': 'Log in required'}, status=403)
+        if not (request.user.is_staff and request.user.type == 'shop'):
+            return JsonResponse({'Status': False, 'Error': "Staff status is false or type is not 'shop'"}, status=403)
+
+        order = Order.objects.filter(
+            ordered_items__product_info__shop__user_id=request.user.id).exclude(state='basket').prefetch_related(
+            'ordered_items__product_info__product__category',
+            'ordered_items__product_info__product_parameters__parameter').select_related('contact').annotate(
+            total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))).distinct()
+
+        serializer = OrderSerializer(order, many=True)
+        return Response(serializer.data)
 
