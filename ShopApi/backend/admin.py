@@ -17,12 +17,13 @@ class CustomUserAdmin(UserAdmin):
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
-    list_display = ('email', 'first_name', 'last_name', 'is_staff')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'type', 'is_staff')
 
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
-    pass
+    model = Shop
+    list_display = ('name', 'user')
 
 
 @admin.register(Category)
@@ -37,7 +38,8 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductInfo)
 class ProductInfoAdmin(admin.ModelAdmin):
-    pass
+    model = ProductInfo
+    list_display = ('external_id', 'product', 'shop')
 
 
 @admin.register(Parameter)
@@ -52,14 +54,17 @@ class ProductParameterAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    pass
+    model = Order
+    list_display = ('dt', 'user', 'state')
 
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    pass
+    model = OrderItem
+    list_display = ('order', 'quantity')
 
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
-    pass
+    model = Contact
+    list_display = ('city', 'street', 'house', 'phone', 'user')

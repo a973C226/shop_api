@@ -18,16 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id',
+                  'username',
                   'first_name',
                   'last_name',
                   'middle_name',
-                  'username',
                   'email',
+                  'type',
                   'company',
                   'position',
                   'contacts',
-                  'type',
-                  'is_staff'
                   )
         read_only_fields = ('id',)
 
@@ -42,8 +41,13 @@ class CategorySerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ('id', 'name', 'state')
+        fields = ('id', 'name', 'state', 'user', 'url', 'filename')
         read_only_fields = ('id',)
+        extra_kwargs = {
+            'user': {'write_only': True},
+            'url': {'write_only': True},
+            'filename': {'write_only': True}
+        }
 
 
 class ShopDetailsSerializer(serializers.ModelSerializer):
@@ -75,7 +79,7 @@ class ProductInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductInfo
-        fields = ('id', 'model', 'product', 'shop', 'quantity', 'price', 'price_rrc', 'product_parameters',)
+        fields = ('id', 'model', 'product', 'shop', 'quantity_in_shop', 'price', 'price_rrc', 'product_parameters',)
         read_only_fields = ('id',)
 
 
