@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'backend',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'django_rest_passwordreset',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'ShopApi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'api_db',
+        'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': '127.0.0.1',
@@ -142,3 +143,13 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'backend.User'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_HOST_USER = 'netology-pdiplom@mail.ru'
+EMAIL_HOST_PASSWORD = 'i~8W4rdRPFlo'
+EMAIL_PORT = 2525
+EMAIL_USE_SSL = False
+SERVER_EMAIL = EMAIL_HOST_USER

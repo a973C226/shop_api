@@ -1,5 +1,5 @@
-from backend.views import RegisterAccount, LoginAccount, ContactView, AccountDetails, ShopView, CategoryView,\
-    PartnerUpdate, ShopDetailsView, PartnerState, ProductInfoView, BasketView, OrderView, PartnerOrders
+from backend.views import RegisterAccount, ConfirmAccount, LoginAccount, ContactView, AccountDetails, ShopView, \
+    CategoryView, PartnerUpdate, ShopDetailsView, PartnerState, ProductInfoView, BasketView, OrderView, PartnerOrders
 
 from django.urls import path
 
@@ -7,6 +7,7 @@ app_name = 'backend'
 
 urlpatterns = [
     path('user/register', RegisterAccount.as_view(), name='user-register'),
+    path('user/register/confirm', ConfirmAccount.as_view(), name='user-register-confirm'),
     path('user/login', LoginAccount.as_view(), name='user-login'),
 
     #For any authorized user
